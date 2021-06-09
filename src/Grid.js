@@ -24,16 +24,14 @@ export default function Grid() {
   const stopGame = () => setGameOver(true);
 
   // key handling
-  // TODO: prevent changing to opposite direction
-  // problem: currDir only takes value at time of eventlistener add
   const handleKeyDown = (e) => {
-    if (e.code === "ArrowDown") {
+    if (e.code === "ArrowDown" && currDir !== "u") {
       setCurrDir("d");
-    } else if (e.code === "ArrowUp") {
+    } else if (e.code === "ArrowUp" && currDir !== "d") {
       setCurrDir("u");
-    } else if (e.code === "ArrowLeft") {
+    } else if (e.code === "ArrowLeft" && currDir !== "r") {
       setCurrDir("l");
-    } else if (e.code === "ArrowRight") {
+    } else if (e.code === "ArrowRight" && currDir !== "l") {
       setCurrDir("r");
     }
   };
@@ -45,77 +43,70 @@ export default function Grid() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [gameOver]);
+  }, [currDir, gameOver]);
 
   // snake movement
   const moveSnake = () => {
     gameState.tail.push({ row: gameState.headRow, col: gameState.headCol });
     gameState.tail.shift();
-    if (currDir === "r") {
-      setGameState({
-        ...gameState,
-        headCol: (gameState.headCol + 1) % cols,
-      });
-    } else if (currDir === "l") {
-      setGameState({
-        ...gameState,
-        headCol: gameState.headCol === 0 ? cols - 1 : gameState.headCol - 1,
-      });
-    } else if (currDir === "u") {
-      setGameState({
-        ...gameState,
-        headRow: gameState.headRow === 0 ? rows - 1 : gameState.headRow - 1,
-      });
-    } else {
-      setGameState({
-        ...gameState,
-        headRow: (gameState.headRow + 1) % rows,
-      });
-    }
+
+    let hrow = gameState.headRow;
+    let hcol = gameState.headCol;
+
+    if (currDir === "r") hcol = (gameState.headCol + 1) % cols;
+    else if (currDir === "l")
+      hcol = gameState.headCol === 0 ? cols - 1 : gameState.headCol - 1;
+    else if (currDir === "u")
+      hrow = gameState.headRow === 0 ? rows - 1 : gameState.headRow - 1;
+    else hrow = (gameState.headRow + 1) % rows;
+
+    setGameState({
+      ...gameState,
+      headRow: hrow,
+      headCol: hcol,
+    });
+
+    return [hrow, hcol];
   };
 
-  const checkConsume = () => {
-    if (
-      gameState.headRow === gameState.foodRow &&
-      gameState.headCol === gameState.foodCol
-    ) {
+  const checkDie = (hrow, hcol) => {
+    gameState.tail.forEach((e) => {
+      if (e.row === hrow && e.col === hcol) {
+        console.log("die");
+        setGameOver(true);
+      }
+    });
+  };
+
+  const checkConsume = (hrow, hcol) => {
+    if (hrow === gameState.foodRow && hcol === gameState.foodCol) {
       gameState.tail.push({ row: gameState.foodRow, col: gameState.foodCol });
       if (gameState.tail.length > hscore) setHscore(gameState.tail.length);
       setGameState({
         ...gameState,
+        headRow: hrow,
+        headCol: hcol,
         foodRow: Math.floor(Math.random() * rows),
         foodCol: Math.floor(Math.random() * cols),
       });
     }
   };
 
-  const checkDie = () => {
-    gameState.tail.forEach((e) => {
-      if (e.row === gameState.headRow && e.col === gameState.headCol)
-        console.log("die");
-      //setGameOver(true);
-    });
-  };
-
   // ticking
-  // TODO: fix lag (or checkConsume still using prevState?)
-  // affects dying too
   const tick = () => {
-    moveSnake();
-    checkDie();
-    checkConsume();
+    const [hrow, hcol] = moveSnake();
+    checkDie(hrow, hcol);
+    checkConsume(hrow, hcol);
   };
 
-  // TODO: fix interval fn using the same prevState (ticks, but prevState+1 = currState = no movement)
-  // temporary fix: gameState as dep, essentially re-running effect every render
   React.useEffect(() => {
-    const interval = gameOver ? {} : setInterval(() => tick(), 200);
+    const interval = gameOver ? {} : setInterval(() => tick(), 100);
     return () => {
       clearInterval(interval);
     };
   }, [gameState, gameOver]);
 
-  // rendering grid
+  // generating grid data
   const cells = [];
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
@@ -171,13 +162,20 @@ export default function Grid() {
         <button onClick={tick}>tick</button>
         <br />
         <button onClick={moveSnake}>moveSnake</button>
-        <button onClick={checkDie}>checkDie</button>
-        <button onClick={checkConsume}>checkConsume</button>
+        <button onClick={() => checkDie(gameState.headRow, gameState.headCol)}>
+          checkDie
+        </button>
+        <button
+          onClick={() => checkConsume(gameState.headRow, gameState.headCol)}
+        >
+          checkConsume
+        </button>
         <br />
         <button onClick={() => setCurrDir("l")}>left</button>
         <button onClick={() => setCurrDir("r")}>right</button>
         <button onClick={() => setCurrDir("u")}>up</button>
         <button onClick={() => setCurrDir("d")}>down</button>
+        <button onClick={() => console.log(currDir)}>showCurrDir</button>
         <br />
         <button onClick={() => console.log(gameState)}>gameState</button>
         <button onClick={() => console.log(gameState.tail)}>tail</button>
