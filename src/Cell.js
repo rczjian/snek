@@ -4,7 +4,7 @@ export default function Cell(props) {
   const isFood = props.isFood;
   const isHead = props.isHead;
   const currDir = props.currDir;
-  const isBody = props.isBody;
+  const isTail = props.isTail;
 
   return (
     <div
@@ -25,7 +25,7 @@ export default function Cell(props) {
           : currDir === "u"
           ? "^"
           : "v"
-        : isBody
+        : isTail
         ? "■"
         : ""}
     </div>

@@ -12,6 +12,7 @@ export default function Grid() {
     foodCol: 2,
     headRow: 3,
     headCol: 4,
+    tail: [],
   });
 
   const incrementScore = () => setScore(score + 1);
@@ -37,7 +38,9 @@ export default function Grid() {
     if (!gameOver) {
       document.addEventListener("keydown", handleKeyDown);
     }
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [gameOver]);
 
   // snake movement
@@ -71,6 +74,7 @@ export default function Grid() {
       gameState.headCol === gameState.foodCol
     ) {
       incrementScore();
+      gameState.tail.push({ row: 2, col: 2 });
       do {
         setGameState({
           ...gameState,
@@ -81,13 +85,25 @@ export default function Grid() {
     }
   };
 
+  // ticking
+  // TODO: fix lag (or checkConsume still using prevState?)
   const tick = () => {
     moveSnake();
     checkConsume();
-    console.log(gameState);
   };
 
-  // rendering
+  // TODO: fix interval fn using prevState
+  // temporary fix: gameState as dep, essentially re-running effect every render
+  React.useEffect(() => {
+    const interval = gameOver
+      ? console.log("game over")
+      : setInterval(() => tick(), 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [gameState, gameOver]);
+
+  // rendering grid
   const cells = [];
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
@@ -135,6 +151,8 @@ export default function Grid() {
           <div>
             <div>debugging 2</div>
             <button onClick={tick}>tick</button>
+            <button onClick={moveSnake}>moveSnake</button>
+            <button onClick={checkConsume}>checkConsume</button>
             <br />
             <button onClick={() => setCurrDir("l")}>left</button>
             <button onClick={() => setCurrDir("r")}>right</button>
@@ -142,6 +160,7 @@ export default function Grid() {
             <button onClick={() => setCurrDir("d")}>down</button>
             <br />
             <button onClick={() => console.log(gameState)}>gameState</button>
+            <button onClick={() => console.log(gameState.tail)}>tail</button>
           </div>
         </div>
       )}
