@@ -5,7 +5,6 @@ export default function Grid() {
   const rows = 10;
   const cols = 10;
   const [gameOver, setGameOver] = React.useState(true);
-  const [score, setScore] = React.useState(0);
   const [currDir, setCurrDir] = React.useState("r");
   const [gameState, setGameState] = React.useState({
     foodRow: 2,
@@ -15,8 +14,11 @@ export default function Grid() {
     tail: [],
   });
 
-  const incrementScore = () => setScore(score + 1);
-  const restartScore = () => setScore(0);
+  const restartScore = () =>
+    setGameState({
+      ...gameState,
+      tail: [],
+    });
   const startGame = () => setGameOver(false);
   const stopGame = () => setGameOver(true);
 
@@ -73,7 +75,7 @@ export default function Grid() {
       gameState.headRow === gameState.foodRow &&
       gameState.headCol === gameState.foodCol
     ) {
-      incrementScore();
+      //incrementScore();
       gameState.tail.push({ row: 2, col: 2 });
       do {
         setGameState({
@@ -97,7 +99,7 @@ export default function Grid() {
   React.useEffect(() => {
     const interval = gameOver
       ? console.log("game over")
-      : setInterval(() => tick(), 1000);
+      : setInterval(() => tick(), 500);
     return () => {
       clearInterval(interval);
     };
@@ -109,9 +111,14 @@ export default function Grid() {
     for (let j = 0; j < cols; j++) {
       const isFood = i === gameState.foodRow && j === gameState.foodCol;
       const isHead = i === gameState.headRow && j === gameState.headCol;
+      let isTail = false;
+      gameState.tail.forEach((e) => {
+        if (e.row === i && e.col === j) isTail = true;
+      });
       cells.push({
         isFood,
         isHead,
+        isTail,
       });
     }
   }
@@ -120,10 +127,9 @@ export default function Grid() {
     <div>
       <div>
         <div>debugging 1</div>
-        <div>score={score}</div>
+        <div>score={gameState.tail.length}</div>
         <button onClick={startGame}>start</button>
         <button onClick={stopGame}>stop</button>
-        <button onClick={incrementScore}>increment</button>
         <button onClick={restartScore}>restart</button>
       </div>
       {gameOver ? (
@@ -143,6 +149,7 @@ export default function Grid() {
                 <Cell
                   isFood={cell.isFood}
                   isHead={cell.isHead}
+                  isTail={cell.isTail}
                   currDir={currDir}
                 />
               );
