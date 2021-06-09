@@ -1,14 +1,12 @@
 import React from "react";
 import Cell from "./Cell";
 
-export default function Grid(props) {
-  const rows = props.rows;
-  const cols = props.cols;
-  const gameOver = props.gameOver;
-  const setGameOver = props.setGameOver;
-  const incrementScore = props.incrementScore;
+export default function Grid() {
+  const rows = 10;
+  const cols = 10;
+  const [gameOver, setGameOver] = React.useState(true);
+  const [score, setScore] = React.useState(0);
   const [currDir, setCurrDir] = React.useState("r");
-
   const [gameState, setGameState] = React.useState({
     foodRow: 2,
     foodCol: 2,
@@ -16,6 +14,33 @@ export default function Grid(props) {
     headCol: 4,
   });
 
+  const incrementScore = () => setScore(score + 1);
+  const restartScore = () => setScore(0);
+  const startGame = () => setGameOver(false);
+  const stopGame = () => setGameOver(true);
+
+  // key handling
+  // TODO: prevent changing to opposite direction
+  const handleKeyDown = (e) => {
+    if (e.code === "ArrowDown") {
+      setCurrDir("d");
+    } else if (e.code === "ArrowUp") {
+      setCurrDir("u");
+    } else if (e.code === "ArrowLeft") {
+      setCurrDir("l");
+    } else if (e.code === "ArrowRight") {
+      setCurrDir("r");
+    }
+  };
+
+  React.useEffect(() => {
+    if (!gameOver) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [gameOver]);
+
+  // snake movement
   const moveSnake = () => {
     if (currDir === "r") {
       setGameState({
@@ -62,6 +87,7 @@ export default function Grid(props) {
     console.log(gameState);
   };
 
+  // rendering
   const cells = [];
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
@@ -74,32 +100,51 @@ export default function Grid(props) {
     }
   }
 
-  return gameOver ? (
-    <div>game over :(</div>
-  ) : (
+  return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          "flex-wrap": "wrap",
-          height: 22 * rows,
-          width: 22 * cols,
-        }}
-      >
-        {cells.map((cell) => {
-          return (
-            <Cell isFood={cell.isFood} isHead={cell.isHead} currDir={currDir} />
-          );
-        })}
-      </div>
       <div>
-        <div>for debugging</div>
-        <button onClick={tick}>tick</button>
-        <button onClick={() => setCurrDir("l")}>left</button>
-        <button onClick={() => setCurrDir("r")}>right</button>
-        <button onClick={() => setCurrDir("u")}>up</button>
-        <button onClick={() => setCurrDir("d")}>down</button>
+        <div>debugging 1</div>
+        <div>score={score}</div>
+        <button onClick={startGame}>start</button>
+        <button onClick={stopGame}>stop</button>
+        <button onClick={incrementScore}>increment</button>
+        <button onClick={restartScore}>restart</button>
       </div>
+      {gameOver ? (
+        <div>game over :(</div>
+      ) : (
+        <div>
+          <div
+            style={{
+              display: "flex",
+              "flex-wrap": "wrap",
+              height: 22 * rows,
+              width: 22 * cols,
+            }}
+          >
+            {cells.map((cell) => {
+              return (
+                <Cell
+                  isFood={cell.isFood}
+                  isHead={cell.isHead}
+                  currDir={currDir}
+                />
+              );
+            })}
+          </div>
+          <div>
+            <div>debugging 2</div>
+            <button onClick={tick}>tick</button>
+            <br />
+            <button onClick={() => setCurrDir("l")}>left</button>
+            <button onClick={() => setCurrDir("r")}>right</button>
+            <button onClick={() => setCurrDir("u")}>up</button>
+            <button onClick={() => setCurrDir("d")}>down</button>
+            <br />
+            <button onClick={() => console.log(gameState)}>gameState</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
