@@ -15,9 +15,7 @@ export default function Cell(props) {
         "text-align": "center",
       }}
     >
-      {isFood
-        ? "o"
-        : isHead
+      {isHead
         ? currDir === "r"
           ? ">"
           : currDir === "l"
@@ -25,6 +23,8 @@ export default function Cell(props) {
           : currDir === "u"
           ? "^"
           : "v"
+        : isFood
+        ? "o"
         : isTail
         ? "■"
         : ""}

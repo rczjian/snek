@@ -6,9 +6,10 @@ export default function Grid() {
   const cols = 10;
   const [gameOver, setGameOver] = React.useState(true);
   const [currDir, setCurrDir] = React.useState("r");
+  const [hscore, setHscore] = React.useState(0);
   const [gameState, setGameState] = React.useState({
-    foodRow: 2,
-    foodCol: 2,
+    foodRow: Math.floor(Math.random() * rows),
+    foodCol: Math.floor(Math.random() * cols),
     headRow: 3,
     headCol: 4,
     tail: [],
@@ -24,8 +25,10 @@ export default function Grid() {
 
   // key handling
   // TODO: prevent changing to opposite direction
+  // problem: currDir only takes value "r"?
   const handleKeyDown = (e) => {
     if (e.code === "ArrowDown") {
+      console.log(currDir);
       setCurrDir("d");
     } else if (e.code === "ArrowUp") {
       setCurrDir("u");
@@ -41,12 +44,14 @@ export default function Grid() {
       document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+      //     document.removeEventListener("keydown", handleKeyDown);
     };
   }, [gameOver]);
 
   // snake movement
   const moveSnake = () => {
+    gameState.tail.push({ row: gameState.headRow, col: gameState.headCol });
+    gameState.tail.shift();
     if (currDir === "r") {
       setGameState({
         ...gameState,
@@ -75,31 +80,37 @@ export default function Grid() {
       gameState.headRow === gameState.foodRow &&
       gameState.headCol === gameState.foodCol
     ) {
-      //incrementScore();
-      gameState.tail.push({ row: 2, col: 2 });
-      do {
-        setGameState({
-          ...gameState,
-          foodRow: Math.floor(Math.random() * rows),
-          foodCol: Math.floor(Math.random() * cols),
-        });
-      } while (false);
+      gameState.tail.push({ row: gameState.foodRow, col: gameState.foodCol });
+      if (gameState.tail.length > hscore) setHscore(gameState.tail.length);
+      setGameState({
+        ...gameState,
+        foodRow: Math.floor(Math.random() * rows),
+        foodCol: Math.floor(Math.random() * cols),
+      });
     }
+  };
+
+  const checkDie = () => {
+    gameState.tail.forEach((e) => {
+      if (e.row === gameState.headRow && e.col === gameState.headCol)
+        console.log("die");
+      //setGameOver(true);
+    });
   };
 
   // ticking
   // TODO: fix lag (or checkConsume still using prevState?)
+  // affects dying too
   const tick = () => {
     moveSnake();
     checkConsume();
+    checkDie();
   };
 
   // TODO: fix interval fn using prevState
   // temporary fix: gameState as dep, essentially re-running effect every render
   React.useEffect(() => {
-    const interval = gameOver
-      ? console.log("game over")
-      : setInterval(() => tick(), 500);
+    const interval = gameOver ? {} : setInterval(() => tick(), 500);
     return () => {
       clearInterval(interval);
     };
@@ -128,49 +139,52 @@ export default function Grid() {
       <div>
         <div>debugging 1</div>
         <div>score={gameState.tail.length}</div>
+        <div>high score={hscore}</div>
         <button onClick={startGame}>start</button>
-        <button onClick={stopGame}>stop</button>
+        <button onClick={stopGame}>pause</button>
         <button onClick={restartScore}>restart</button>
       </div>
-      {gameOver ? (
-        <div>game over :(</div>
-      ) : (
-        <div>
-          <div
-            style={{
-              display: "flex",
-              "flex-wrap": "wrap",
-              height: 22 * rows,
-              width: 22 * cols,
-            }}
-          >
-            {cells.map((cell) => {
-              return (
-                <Cell
-                  isFood={cell.isFood}
-                  isHead={cell.isHead}
-                  isTail={cell.isTail}
-                  currDir={currDir}
-                />
-              );
-            })}
-          </div>
-          <div>
-            <div>debugging 2</div>
-            <button onClick={tick}>tick</button>
-            <button onClick={moveSnake}>moveSnake</button>
-            <button onClick={checkConsume}>checkConsume</button>
-            <br />
-            <button onClick={() => setCurrDir("l")}>left</button>
-            <button onClick={() => setCurrDir("r")}>right</button>
-            <button onClick={() => setCurrDir("u")}>up</button>
-            <button onClick={() => setCurrDir("d")}>down</button>
-            <br />
-            <button onClick={() => console.log(gameState)}>gameState</button>
-            <button onClick={() => console.log(gameState.tail)}>tail</button>
-          </div>
+
+      <div>
+        <div
+          style={{
+            display: "flex",
+            "flex-wrap": "wrap",
+            height: 22 * rows,
+            width: 22 * cols,
+          }}
+        >
+          {cells.map((cell) => {
+            return (
+              <Cell
+                isFood={cell.isFood}
+                isHead={cell.isHead}
+                isTail={cell.isTail}
+                currDir={currDir}
+              />
+            );
+          })}
         </div>
-      )}
+        <div>
+          <div>debugging 2</div>
+          <button onClick={tick}>tick</button>
+          <button onClick={moveSnake}>moveSnake</button>
+          <button onClick={checkConsume}>checkConsume</button>
+          <button onClick={checkDie}>checkDie</button>
+          <br />
+          <button onClick={() => setCurrDir("l")}>left</button>
+          <button onClick={() => setCurrDir("r")}>right</button>
+          <button onClick={() => setCurrDir("u")}>up</button>
+          <button onClick={() => setCurrDir("d")}>down</button>
+          <button onClick={() => console.log(currDir)}>currDir</button>
+          <button onClick={() => console.log(currDir !== "u")}>
+            currDirIsUp
+          </button>
+          <br />
+          <button onClick={() => console.log(gameState)}>gameState</button>
+          <button onClick={() => console.log(gameState.tail)}>tail</button>
+        </div>
+      </div>
     </div>
   );
 }
