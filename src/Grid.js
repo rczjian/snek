@@ -2,8 +2,12 @@ import React from "react";
 import Cell from "./Cell";
 
 export default function Grid() {
-  const rows = 10;
-  const cols = 20;
+  const [rows, setRows] = React.useState(10);
+  const [cols, setCols] = React.useState(20);
+  const [tickInterval, setTickInterval] = React.useState(100);
+  const [tempRows, setTempRows] = React.useState(10);
+  const [tempCols, setTempCols] = React.useState(20);
+  const [tempInterval, setTempInterval] = React.useState(100);
   const [gameOver, setGameOver] = React.useState(true);
   const [currDir, setCurrDir] = React.useState("r");
   const [hscore, setHscore] = React.useState(0);
@@ -14,6 +18,15 @@ export default function Grid() {
     headCol: Math.floor(cols / 2),
     tail: [],
   });
+  const resetGameState = (r, c) => {
+    setGameState({
+      foodRow: Math.floor(Math.random() * r),
+      foodCol: Math.floor(Math.random() * c),
+      headRow: Math.floor(r / 2),
+      headCol: Math.floor(c / 2),
+      tail: [],
+    });
+  };
 
   const restartScore = () =>
     setGameState({
@@ -34,6 +47,7 @@ export default function Grid() {
     } else if (e.code === "ArrowRight" && currDir !== "l") {
       setCurrDir("r");
     }
+    e.preventDefault();
   };
 
   React.useEffect(() => {
@@ -100,11 +114,41 @@ export default function Grid() {
   };
 
   React.useEffect(() => {
-    const interval = gameOver ? {} : setInterval(() => tick(), 100);
+    const interval = gameOver ? {} : setInterval(() => tick(), tickInterval);
     return () => {
       clearInterval(interval);
     };
   }, [gameState, gameOver]);
+
+  // modifying grid size
+  const handleRowsChange = (e) => {
+    setTempRows(e.target.value === "" ? tempRows : e.target.value);
+  };
+
+  const handleColsChange = (e) => {
+    setTempCols(e.target.value === "" ? tempCols : e.target.value);
+  };
+
+  const handleDimensionChange = () => {
+    if (isNaN(tempRows) || isNaN(tempCols) || tempRows > 30 || tempCols > 30)
+      console.log("not a number <= 30");
+    else {
+      setRows(tempRows);
+      setCols(tempCols);
+      resetGameState(tempRows, tempCols);
+    }
+  };
+
+  // modifying snake speed
+  const handleSpeedChange = (e) => {
+    setTempInterval(e.target.value === "" ? tempInterval : e.target.value);
+  };
+
+  const handleIntervalChange = () => {
+    if (isNaN(tempInterval) || tempInterval > 1000)
+      console.log("not a number <= 1000");
+    else setTickInterval(tempInterval);
+  };
 
   // generating grid data
   const cells = [];
@@ -179,6 +223,23 @@ export default function Grid() {
         <br />
         <button onClick={() => console.log(gameState)}>gameState</button>
         <button onClick={() => console.log(gameState.tail)}>tail</button>
+        <br />
+        <div>
+          numRows:
+          <input onChange={handleRowsChange} size={2} />
+          <br />
+          numCols:
+          <input onChange={handleColsChange} size={2} />
+          <br />
+          <button onClick={handleDimensionChange}>submit dimensions</button>
+        </div>
+        <div>
+          interval (ms):
+          <input onChange={handleSpeedChange} size={4} />
+          [current = {tickInterval}]
+          <br />
+          <button onClick={handleIntervalChange}>submit interval</button>
+        </div>
       </div>
     </div>
   );
